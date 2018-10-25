@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="/static/bootstrap-3.3.7-dist/jquery-3.3.1/jquery-3.3.1.min.js"></script>
+    <script src="/static/page.js"></script>
+    <script src="/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script src="/static/bootstrap-3.3.7-dist/js/bootstrap-paginator.js"></script>
+    <link rel="stylesheet" href="/static/index.css" crossorigin="anonymous">
+    <title>新词入库</title>
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // 这些HTTP方法不要求CSRF包含
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+    </script>
+
+    <script>
+        function delete_word(word_id,type) {
+            $.ajax({
+                url: "/test_App/show_new_words/delete_word",
+                type: "POST",
+                data: {"word_id": word_id,"type":type},
+                success: function (data1) {
+                    alert(data1);
+                    msgObj = document.getElementById("msg_"+word_id);
+                    tempStr = data1;
+                    msgObj.innerHTML = tempStr
+                }
+            })
+        }
+        function stop_to_new(word_id) {
+            $.ajax({
+                url: "/test_App/show_new_words/stop_to_new",
+                type: "POST",
+                data: {"word_id": word_id},
+                success: function (data1) {
+                    alert(data1);
+                    msgObj = document.getElementById("msg_"+word_id);
+                    tempStr = data1;
+                    msgObj.innerHTML = tempStr
+                }
+            })
+        }
+    </script>
+
+</head>
+
+<body>
+    <div class="container card">
+        <div class="page-header row mtb-16">
+            <div class="col-lg-9">
+                <h1>停用词库 <small>添加至停用词库的停用词会出现在这里</small></h1>
+            </div>
+            <div class="col-lg-3 text-right">
+                <a class="logo" href="/test_App/"></a>
+            </div>
+        </div>
+
+        <div class="row mb-16">
+            <div class="col-lg-4" >
+                <div class="btn-group" role="group" aria-label="...">
+                    <a  href="/test_App/show_new_words/go_new" class="btn btn-default">进入新词库</a>
+                </div>
+            </div>
+        </div>
+
+        <table  class="table table-striped table-hover">
+            <colgroup>
+                <col style="width: 10%; min-width: 10%;">
+                <col style="width: 25%; min-width: 25%;">
+
+                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 15%; min-width: 15%;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>停用词</th>
+
+                    <th>状态</th>
+                    <th>操作</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="tb">
+             </tbody>
+        </table>
+        <input type="submit" value="Submit" id="last_page" hidden/>
+        <div class="m-style M-box"></div>
+        <script>
+             var pagesize=10
+             $.ajax(
+                {
+                    url:'/test_App/show_new_words/go_stop',
+                    type:'POST',
+                    data:{'page':1,'count':pagesize},
+                    dataType:'JSON',
+                    success:function (callback) {
+                        var page_count=callback.page_count;
+                        var page_cont=callback.page_content;
+                        $('tbody').append(page_cont);
+                        $('#last_page').text(page_count);
+                        $('.M-box').pagination({
+                            pageCount: Math.ceil(page_count/pagesize),
+                            coping: true,
+                            count:2,
+                            homePage: '首页',
+                            endPage: '末页',
+                            prevContent: '上页',
+                            nextContent: '下页',
+                            callback: function (api) {
+                                $.ajax({
+                                    url:'/test_App/show_new_words/go_stop',
+                                    type:'POST',
+                                    data:{'page':api.getCurrent(),'count':pagesize},
+                                    dataType:'JSON',
+                                    success:function (callback) {
+                                        $('tbody').empty();
+                                        var page_count=callback.page_count;
+                                        var page_cont=callback.page_content;
+                                        $('tbody').append(page_cont);
+                                        $('#last_page').text(page_count)
+                                    }
+                                })
+                            }
+                        });
+                    }
+                }
+            )
+        </script>
+    </div>
+</body>
+</html>

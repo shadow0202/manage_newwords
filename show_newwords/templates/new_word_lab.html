@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="/static/bootstrap-3.3.7-dist/jquery-3.3.1/jquery-3.3.1.min.js"></script>
+    <script src="/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/static/index.css" crossorigin="anonymous">
+    <title>新词入库</title>
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // 这些HTTP方法不要求CSRF包含
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+    </script>
+
+    <script>
+        function goPage(pno){
+            var itable = document.getElementById("tb");
+            var rows=itable.rows
+            var num = rows.length;//表格所有行数(所有记录数)
+            var totalPage = 0;//总页数
+            var pageSize = 10;//每页显示行数
+            //总共分几页
+            if(num/pageSize > parseInt(num/pageSize)){
+                totalPage=parseInt(num/pageSize)+1;
+            }else{
+                totalPage=parseInt(num/pageSize);
+            }
+            var currentPage = pno;//当前页数
+            var startRow = (currentPage - 1) * pageSize+1;//开始显示的行  31
+            var endRow = currentPage * pageSize;//结束显示的行   40
+            endRow = (endRow > num)? num : endRow;    //40
+            console.log(endRow);
+            for(var i=1;i<(num+1);i++){
+                //遍历显示数据实现分页
+                var irow = rows[i-1];
+                if(i>=startRow && i<=endRow){
+                    irow.style.display = "table-row";
+                }else{
+                    irow.style.display = "none";
+                }
+            }
+            var pageEnd = document.getElementById("pageEnd");
+            var tempStr = "<li>\n" +
+                            "      <a href=\"#\" aria-label=\"Previous\">\n" +
+                            "        <span aria-hidden=\"true\">&laquo;</span>\n" +
+                            "      </a>\n" +
+                            "    </li>";
+
+            for(var pageIndex= 1;pageIndex<totalPage+1;pageIndex++){
+                tempStr += "<li id=\""+pageIndex+"\"><a  onclick=\"goPage("+pageIndex+");  pageHighLight(" + pageIndex +")\"" + ">" + pageIndex + "</a></li>";
+            }
+
+            tempStr += "<li>\n" +
+                "      <a href=\"#\" aria-label=\"Next\">\n" +
+                "        <span aria-hidden=\"true\">&raquo;</span>\n" +
+                "      </a>\n" +
+                "    </li>";
+
+            document.getElementById("barcon").innerHTML = tempStr;
+        }
+    </script>
+
+    <script>
+        function pageHighLight(pageId) {
+            pageBt = document.getElementById(pageId);
+            pageBt.setAttribute("class","active")
+        }
+    </script>
+
+
+    <script>
+        $(function(){
+            var str='show_new_words'
+            var path=window.location.pathname
+            if(path.indexOf(str)>-1){
+                $('#barcon').show()
+            }else{
+                $('#barcon').hide()
+            }
+            goPage(1);
+            pageHighLight(1)
+        })
+
+    </script>
+
+    <script>
+        function add_stop(word_id) {
+            $.ajax({
+                url: "/test_App/show_new_words/new_to_stop",
+                type: "POST",
+                data: {"word_id": word_id},
+                success: function (data1) {
+                    alert(data1);
+                    msgObj = document.getElementById("msg_"+word_id);
+                    tempStr = data1;
+                    msgObj.innerHTML = tempStr
+                }
+            })
+        }
+
+        function delete_word(word_id,type) {
+            $.ajax({
+                url: "/test_App/show_new_words/delete_word",
+                type: "POST",
+                data: {"word_id": word_id,"type":type},
+                success: function (data1) {
+                    alert(data1);
+                    msgObj = document.getElementById("msg_"+word_id);
+                    tempStr = data1;
+                    msgObj.innerHTML = tempStr
+                }
+            })
+        }
+    </script>
+
+    <script>
+        function getCoverResult() {
+            $.ajax({
+                url: "/test_App/show_new_words/getCoverResult",
+                type: "POST",
+                success: function (data1) {
+{#                    msgObj = document.getElementById("cover_result");#}
+{#                    msgObj.innerHTML = data1#}
+                    console.log(data1);
+                    document.location.reload();
+                }
+            })
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container card">
+        <div class="page-header row mtb-16">
+            <div class="col-lg-9">
+                <h1>新词库 <small>添加至新词库的新词会出现在这里</small></h1>
+            </div>
+            <div class="col-lg-3 text-right">
+                <a class="logo" href="/test_App/"></a>
+            </div>
+        </div>
+
+        <div id="chartmain" style="position: relative; overflow: hidden; width: 1000px; height: 500px; cursor: default;"></div>
+
+
+        <div class="row mb-16">
+            <div class="col-lg-4" >
+                <div class="btn-group" role="group" aria-label="...">
+                    <a  href="/test_App/show_new_words/go_stop" class="btn btn-default">进入停用词库</a>
+                </div>
+                <div class="btn-group" role="group" aria-label="...">
+                    <a  onclick="getCoverResult()" class="btn btn-default">计算覆盖率结果</a>
+                </div>
+                <div class="btn-group" role="group" aria-label="..." id="cover_result">
+                </div>
+            </div>
+        </div>
+
+        <table  class="table table-striped table-hover">
+            <colgroup>
+                <col style="width: 10%; min-width: 10%;">
+                <col style="width: 25%; min-width: 25%;">
+                <col style="width: 10%; min-width: 10%;">
+                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 15%; min-width: 15%;">
+            </colgroup>
+         <thead>
+            <tr>
+                <th>序号</th>
+                <th>新词</th>
+                <th>出现次数</th>
+                <th>领域</th>
+                <th>状态</th>
+                <th>操作</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tb">
+            {% for item in new_words_list%}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.new_word }}</td>
+                <td>{{ item.counts }}</td>
+                <td>{{ item.types }}</td>
+                <td>
+                     <p class="text-success" id="msg_{{ item.id }}" >{{ item.add_msg }}</p>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-primary btn-xs" onclick="delete_word({{ item.id }},'new')">移除新词库</button>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-xs" onclick="add_stop({{ item.id }})">移至停用词库</button>
+                </td>
+            </tr>
+            {% endfor %}
+         </tbody>
+        </table>
+
+        <div class="row">
+            <div class="col-lg-12 text-right">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="barcon" style="display: none"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECharts单文件引入 -->
+    <script src="/static/bootstrap-3.3.7-dist/js/echarts.common.min.js"></script>
+    <script type="text/javascript">
+        var myChart = echarts.init(document.getElementById('chartmain'));
+        option = {
+            title: {
+                text: '覆盖率'
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    crossStyle: {
+                        color: '#999'
+                    }
+                }
+            },
+            toolbox: {
+                feature: {
+                    dataView: {show: true, readOnly: false},
+                    magicType: {show: true, type: ['line', 'bar']},
+                    restore: {show: true},
+                    saveAsImage: {show: true}
+                }
+            },
+            legend: {
+                data:['覆盖率']
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    data: [],
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    scale: true,
+                    axisLabel: {
+                        formatter: '{value} %'
+                    }
+                }
+            ],
+            series: [
+                {
+                    name:'覆盖率',
+                    type:'line',
+                    itemStyle :
+                        { normal: {label : {show: true}}},
+                    data:[]
+                }
+            ]
+        };
+
+        $.ajax({
+            type : "post",
+            async : true, //异步执行
+            url : "/test_App/show_new_words/getAllCoverResult",
+            dataType : "json", //返回数据形式为json
+            success : function(json) {
+                console.log(json.coverate);
+                if (json) {
+                    myChart.hideLoading();
+                    myChart.setOption({
+                        xAxis:{
+                            data:json.time
+                        },
+                        series:[{
+                            // 根据名字对应到相应的系列
+                            name: '覆盖率',
+                            data: json.coverate
+                        }]
+                    });
+                }
+            },
+            error : function(errorMsg) {
+                alert("请求数据失败");
+            }
+        });
+
+        // 为echarts对象加载数据
+        myChart.setOption(option);
+    </script>
+</body>
+</html>
