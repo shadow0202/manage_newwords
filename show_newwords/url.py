@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^show_new_words/(\d+)',views.show_new_words,name='show_new_words'),
-    url(r'^show_new_words/uesr_defined',views.show_user_defined_num,name='show_user_defined_num'),
+    url(r'^show_new_words/createTask',views.createTask,name='show_user_defined_num'),
     url(r'^show_new_words/add_new',views.add_new,name='add_new'),
     url(r'^show_new_words/add_stop',views.add_stop,name='add_stop'),
     url(r'^show_new_words/go_new',views.go_new,name='go_new'),

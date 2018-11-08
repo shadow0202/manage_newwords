@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.min.css" crossorigin="anonymous">
-    <script src="/static/bootstrap-3.3.7-dist/jquery-3.3.1/jquery-3.3.1.min.js"></script>
+        <script src="/static/bootstrap-3.3.7-dist/jquery-3.3.1/jquery-3.3.1.min.js"></script>
     <script src="/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="/static/index.css" crossorigin="anonymous">
     <title>新词入库</title>
@@ -46,26 +46,29 @@
     </script>
 
     <script>
-        function getResult() {
-            num = document.getElementById("num").value;
-            if (document.getElementById("info3").style.display === "block"){
-                alert("程序正在运行!")
-            }else{
-                if ((/(^[1-9]\d*$)/.test(num))){
-                    document.getElementById("info2").style.display = "none";
-                    document.getElementById("info3").style.display = "block";
-                    $.ajax({
-                        url: "/test_App/show_new_words/uesr_defined",
-                        type: "POST",
-                        success: function (data1) {
-                            obj = document.getElementById("info2").innerHTML = data1;
-                            document.getElementById("info2").style.display = "block";
-                            document.getElementById("info3").style.display = "none";
+        function createTask() {
+            task_name = document.getElementById("taskName").value;
+            dec = document.getElementById("dec").value;
+{#            console.log(num.replace(/(^s*)|(s*$)/g, "").length);#}
+            if (task_name.replace(/(^\s*)|(\s*$)/g, "") !== ""){
+                document.getElementById("msg").style.display ="none";
+                $.ajax({
+                    url: "/test_App/show_new_words/createTask",
+                    type: "POST",
+                    data: {"task_name": task_name,"dec":dec},
+                    success: function (tasks) {
+                        console.log('success create task');
+                        obj = document.getElementById("tb");
+                        for(i = 0;i <=tasks.length;i++){
+                            obj.innerHTML = "<tr><td>"+tasks[i].id+"</td><td>"+ tasks[i].task_name +"</td><td>" + tasks[i].dec +"</td><td>" + tasks[i].status + "</td>\n" +
+                            "                <td><a>查看详情</a></td>\n" +
+                            "                <td><a>删除</a></td>\n" +
+                            "            </tr>"
                         }
-                    })
-                }else{
-                    document.getElementById("msg").style.display ="block";
-                }
+                    }
+                })
+            }else{
+                document.getElementById("msg").style.display ="block";
             }
         }
     </script>
@@ -125,7 +128,6 @@
         }
     </script>
 
-
     <script>
         $(function(){
             var str='show_new_words'
@@ -178,7 +180,7 @@
     <div class="container card">
         <div class="page-header row mtb-16">
             <div class="col-lg-9">
-                <h1>新词入库 <small>收集可用新词至新词库，识别停用词至停用词库</small></h1>
+                <h1>新词覆盖率 <small>从热门网站上爬取内容进行分词，分为热词和新词两种形式</small></h1>
             </div>
             <div class="col-lg-3 text-right">
                 <div class="logo"></div>
@@ -186,7 +188,7 @@
         </div>
 
         <div class="alert alert-danger" role="alert" id="msg" style="display: none">
-            格式错误：请输入正整数
+            任务名称不能为空
         </div>
 
         <div class="row mb-16">
@@ -194,22 +196,26 @@
                 <div class="btn-group">
                     <form id="form" class="form-inline form-style" method="post">
                         {% csrf_token %}
+                        <span> 任务名称 </span>
                         <div class="form-group">
-                            <input type="text" class="form-control input-sm w100" name='num' id='num' placeholder="每个领域获取词条个数">
+                            <input type="text" class="form-control input-sm w250" name='taskName' id='taskName' >
                         </div>
-                        <button type="button"  class="btn btn-primary ml-16 btn-xs" onclick="getResult()">Run</button>
+                        <span> 描述 </span>
+                        <div class="form-group">
+                            <input type="text" class="form-control input-sm w450" name='dec' id='dec' />
+                        </div>
+                        <button type="button"  class="btn btn-primary ml-16 btn-xs" onclick="createTask()">Run</button>
                     </form>
                 </div>
             </div>
             <div class="col-lg-4" >
                 <div class="btn-group" role="group" aria-label="...">
-                    <a  href="/test_App/show_new_words/1" class="btn btn-default">获取结果</a>
-                    <a  href="/test_App/show_new_words/go_new" class="btn btn-default">进入新词库</a>
-                    <a  href="/test_App/show_new_words/go_stop" class="btn btn-default">进入停用词库</a>
+{#                    <a  href="/test_App/show_new_words/1" class="btn btn-default">获取结果</a>#}
+{#                    <a  href="/test_App/show_new_words/go_new" class="btn btn-default">进入新词库</a>#}
+{#                    <a  href="/test_App/show_new_words/go_stop" class="btn btn-default">查看停用词库</a>#}
                 </div>
             </div>
 
-            <div class="text-muted" ><h4 id="info4">上次运行结果时间： {{ time }}</h4></div>
         </div>
 
         <form role="form" id="t_are" style="display: none">
@@ -222,84 +228,37 @@
         <table  class="table table-striped table-hover">
             <colgroup>
                 <col style="width: 10%; min-width: 10%;">
-                <col style="width: 25%; min-width: 25%;">
-                <col style="width: 10%; min-width: 10%;">
+                <col style="width: 20%; min-width: 25%;">
+                <col style="width: 25%; min-width: 10%;">
                 <col style="width: 15%; min-width: 15%;">
-                <col style="width: 15%; min-width: 15%;">
-                <col style="width: 15%; min-width: 15%;">
-                <col style="width: 15%; min-width: 15%;">
+                <col style="width: 10%; min-width: 15%;">
+                <col style="width: 10%; min-width: 15%;">
             </colgroup>
          <thead >
             <tr>
                 <th>序号</th>
-                <th>新词</th>
-                <th>出现次数</th>
-                <th>领域</th>
+                <th>任务名称</th>
+                <th>描述</th>
                 <th>状态</th>
-                <th>操作</th>
+                <th>详情</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody id="tb">
-            {% for item in new_words_list%}
+{#            {% for item in new_words_list%}#}
             <tr>
-                <td>{{ item.id }}</td>
-                <td>{{ item.new_word }}</td>
-                <td>{{ item.counts }}</td>
-                <td>{{ item.types }}</td>
-                <td>
-                    <p class="text-success" id="msg_{{ item.id }}" >{{ item.add_msg }}</p>
-{#                    <p class="text-success" id="new_word_msg_{{ item.id }}" style="display: none">{{ item.add_msg }}</p>#}
-{#                    <p class="text-warning" id="stop_word_msg_{{ item.id }}" style="display: none">{{ item.add_msg }}</p>#}
-                </td>
-                <td>
-                    <button type="button" class="btn btn-primary btn-xs" onclick="add_new({{ item.id }})">添加至新词库</button>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-xs" onclick="add_stop({{ item.id }})">添加至停用词库</button>
-                </td>
+                <td>1</td>
+                <td>2018Q1test</td>
+                <td>none</td>
+                <td>Running...</td>
+                <td><a>查看详情</a></td>
+                <td><a>删除</a></td>
             </tr>
-            {% empty %}
-                <p class="text-danger">{{ page_con }}</p>
-            {% endfor %}
+{#            {% empty %}#}
+{#                <p class="text-danger">{{ page_con }}</p>#}
+{#            {% endfor %}#}
          </tbody>
         </table>
-
-{#        <div class="text-primary" ><h4 id="info2">{{ info }}</h4></div>#}
-{#        <div class="text-primary" ><h4 id="info3" style="display: none">程序运行中.....</h4></div>#}
-
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>任务创建时间</th>
-              <th>状态</th>
-              <th>查看</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">1</th>
-              <td>Mark</td>
-              <td>Otto</td>
-                <td>Otto</td>
-            </tr>
-            <tr>
-              <th scope="row">2</th>
-              <td>Jacob</td>
-              <td>Thornton</td>
-                <td>Otto</td>
-            </tr>
-            <tr>
-              <th scope="row">3</th>
-              <td>Larry</td>
-              <td>the Bird</td>
-                <td>Otto</td>
-            </tr>
-          </tbody>
-        </table>
-
-
 
         <div class="row">
             <div class="col-lg-12 text-right">

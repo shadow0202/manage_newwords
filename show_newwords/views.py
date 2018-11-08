@@ -6,7 +6,7 @@ import time
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
-from show_newwords.models import NewWords, New_List, Stop_List, Coverate, RunTime, runInfo
+from show_newwords.models import NewWords, New_List, Stop_List, Coverate, RunTime, runInfo, Task
 
 
 # Create your views here.
@@ -25,22 +25,24 @@ def show_new_words(request,num):
 
 @csrf_protect
 @csrf_exempt
-def show_user_defined_num(request):
+def createTask(request):
     if request.method == 'POST':
-        user_defined_num = request.POST.get('num')
-        runInfo.objects.filter(id = 1).update(info="程序正在运行中....")
-        print user_defined_num
+        task_name = request.POST.get('task_name')
+        dec = request.POST.get('dec')
         try:
-            import sys
-            basepath = "C:/Users/huxw/Desktop/dictfound/dictfound.git"
-            sys.path.append(str(basepath))
-            path = "C:/Users/huxw/Desktop/dictfound/dictfound.git/solution_newdict_main.py"
-            execfile(str(path))
-            print "success"
-            runInfo.objects.filter(id = 1).update(info="点击上方获取结果按钮查看最新结果")
-            return HttpResponse("运行成功!")
-        except:
-            return HttpResponse("程序异常!")
+            Task.objects.get_or_create(task_name = task_name, dec = dec ,status = 'Running...')
+            tasks = Task.objects.all()
+            # import sys
+            # basepath = "C:/Users/huxw/Desktop/dictfound/dictfound.git"
+            # sys.path.append(str(basepath))
+            # path = "C:/Users/huxw/Desktop/dictfound/dictfound.git/solution_newdict_main.py"
+            # execfile(str(path))
+            # print "success"
+            # runInfo.objects.filter(id = 1).update(info="点击上方获取结果按钮查看最新结果")
+            return render(request, 'home.html', {"tasks": tasks})
+        except Exception as e:
+            return HttpResponse("程序异常!",e)
+        pass
     else:
         return render_to_response('home.html')
 
